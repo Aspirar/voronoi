@@ -37,26 +37,37 @@ function getFShaderSrc() {
     in vec4 vPos;
     out vec4 pixel;
 
-    vec2 randomV2(float seed) {
-      return vec2(fract(sin(seed * 2345.678)), fract(sin(seed * 38859.234)));
+    vec2 randomV2(vec2 seed) {
+      return vec2(fract(sin(seed.x * 2345.678 + seed.y * 3488982.394)), fract(sin(seed.y * 38859.234 + seed.x * 129384.22)));
     }
 
     void main() {
       vec2 uv = vPos.xy;
 
+      float factor = 40.;
+
+      uv *= factor;
+      vec2 gv = fract(uv);
+
+      vec2 id = floor(uv);
+
       float minDist = 100.;
-      vec2 tex = vec2(0.);
-      for (float i = 0.; i < 5000.; i++) {
-        vec2 point = randomV2(i) * 2. - 1.;
-        float d = length(uv - point);
-        if (d < minDist) {
-          minDist = d;
-          tex = point;
+      vec2 cell = id;
+      for (float y = -1.; y <= 1.; y++) {
+        for (float x = -1.; x <= 1.; x++) {
+          vec2 offset = vec2(x, y);
+          vec2 p = offset + randomV2(id + offset);
+          float d = length(gv - p);
+          if (d < minDist) {
+            minDist = d;
+            cell = id + offset;
+          }
         }
       }
-      vec3 color = vec3(minDist);
-      pixel = vec4(color, 1.);
-      pixel = texture(uImage, tex * vec2(.5, -.5) + .5);
+
+      vec2 tex = (cell / factor) * .5 + .5;
+
+      pixel = texture(uImage, tex * vec2(1., -1.) + vec2(0., 1.));
     }
   `;
 }
